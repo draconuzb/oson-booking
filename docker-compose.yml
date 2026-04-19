@@ -20,7 +20,7 @@ services:
     depends_on:
       - db
     ports:
-      - "${PORT:-5001}:5001"
+      - "127.0.0.1:${PORT:-5001}:5001"
     environment:
       NODE_ENV: production
       PORT: 5001
@@ -31,17 +31,18 @@ services:
       DB_NAME: booking_system
       JWT_SECRET: ${JWT_SECRET:-osonbooking-secret-change-me}
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
+      CORS_ORIGIN: ${CORS_ORIGIN:-https://booking.wecreate.uz}
 
   frontend:
     build:
       context: ./frontend
       args:
-        NEXT_PUBLIC_API_URL: http://localhost:5001
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://booking.wecreate.uz}
     restart: unless-stopped
     depends_on:
       - api
     ports:
-      - "3001:3001"
+      - "127.0.0.1:3001:3001"
 
 volumes:
   pgdata:
