@@ -1,0 +1,47 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: booking_admin
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-bookingpass123}
+      POSTGRES_DB: booking_system
+    # C1 fix: Only expose PostgreSQL on internal Docker network, not to host
+    expose:
+      - "5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./backend/db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+      - ./backend/db/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql
+
+  api:
+    build: ./backend
+    restart: unless-stopped
+    depends_on:
+      - db
+    ports:
+      - "${PORT:-5001}:5001"
+    environment:
+      NODE_ENV: production
+      PORT: 5001
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: booking_admin
+      DB_PASSWORD: ${DB_PASSWORD:-bookingpass123}
+      DB_NAME: booking_system
+      JWT_SECRET: ${JWT_SECRET:-osonbooking-secret-change-me}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:5001
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "3001:3001"
+
+volumes:
+  pgdata:
